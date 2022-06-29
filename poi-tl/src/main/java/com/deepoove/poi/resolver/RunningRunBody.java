@@ -93,8 +93,10 @@ public class RunningRunBody {
             int startOffset = startEdge.getRunEdge();
             int endOffset = endEdge.getRunEdge();
 
-            String startText = runs.get(startRunPos).text();
-            String endText = runs.get(endRunPos).text();
+            XWPFRun startRun = runs.get(startRunPos);
+            XWPFRun endRun = runs.get(endRunPos);
+            String startText = startRun.text();
+            String endText = endRun.text();
 
             if (endOffset + 1 >= endText.length()) {
                 // delete the redundant end Run directly
@@ -109,8 +111,8 @@ public class RunningRunBody {
                     buildExtra(extra, extraRun);
                 } else {
                     // Set the extra content to the redundant end run
-                    XWPFRun extraRun = runs.get(endRunPos);
-                    buildExtra(extra, extraRun);
+                    // XWPFRun extraRun = runs.get(endRunPos);
+                    buildExtra(extra, endRun);
                 }
             }
 
@@ -119,15 +121,20 @@ public class RunningRunBody {
                 runBodyContext.removeRun(m);
             }
 
-            if (startOffset <= 0) {
+            int startChar = 0;
+            if (startText.length() > 0 && startText.charAt(0) == '\t' && startRun.getCTR().getTabArray().length > 0) {
+                startChar = 1;
+            }
+
+            if (startOffset - startChar <= 0) {
                 // set the start Run directly
                 XWPFRun templateRun = runs.get(startRunPos);
                 templateRun.setText(startEdge.getTag(), 0);
                 templateRuns.add(runs.get(startRunPos));
             } else {
                 // split start run, set extra in a run
-                String extra = startText.substring(0, startOffset);
                 XWPFRun extraRun = runs.get(startRunPos);
+                String extra = startText.substring(startChar, startOffset);
                 buildExtra(extra, extraRun);
 
                 XWPFRun templateRun = runBodyContext.insertNewRun(startRunPos + 1);
